@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Union
 
 from fastapi import APIRouter, HTTPException, status, Depends
@@ -5,7 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.schemas import UserCreate, UserDB
+from db.schemas import UserCreate, UserDB, UserReferralDB
 from db.crud import ReferralCodeRepository, UserRepository
 from db.database import get_session
 from security.pwdcrypt import get_password_hash
@@ -35,18 +36,20 @@ async def create_user(
     return {"user": user, "message": "User created successfully"}
 
 
-@loginroute.post(
-    "/registration_by_code/"
-)  # response_model=dict[str, Union[UserDB, str]])
+@loginroute.post("/registration_by_code/", response_model=UserReferralDB)
 async def create_user_referral(
-    referral_email: EmailStr,
+    referral_code: str = Depends(),
     referral_user_data: UserCreate = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
-    code = await ReferralCodeRepository.get_code_by_user_email(session, referral_email)
+    code = await ReferralCodeRepository.get_code(session, referral_code)
     if code is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Referral code not found!"
+        )
+    if code.expires_at < datetime.now():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Referral code has expired!"
         )
 
     referral_user = await UserRepository.get_user_by_email(
@@ -56,6 +59,7 @@ async def create_user_referral(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
+
     referral_user_data.password = get_password_hash(referral_user_data.password)
     new_referral_user = await UserRepository.create_user(session, referral_user_data)
 

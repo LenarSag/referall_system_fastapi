@@ -3,6 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, field_validator
 
+from routes import referral
+
 
 class ReferralCodeCreate(BaseModel):
     code: str
@@ -40,13 +42,8 @@ class UserDB(UserBase):
         orm_mode = True
 
 
-class UserReferralDB(UserBase):
-    referral_code: Optional[ReferralCodeDB]
-    referees: list[UserDB] = []
-    referrers: list[UserDB] = []
-
-    class Config:
-        orm_mode = True
+class UserReferralDB(UserDB):
+    referral: Optional[list["UserDB"]]
 
 
 class UserAuth(BaseModel):

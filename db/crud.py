@@ -19,6 +19,10 @@ class UserRepository:
         result = await session.execute(query)
         return result.scalars().first()
 
+    # @classmethod
+    # async def get_user_by_referral_code(cls, session: AsyncSession, referral_code: str):
+    #     query = select(models.User).join(models.ReferralCode).filter_by()
+
     @classmethod
     async def create_user(cls, session: AsyncSession, user_data: schemas.UserCreate):
         db_user = models.User(**user_data.model_dump())
@@ -29,7 +33,7 @@ class UserRepository:
 
     @classmethod
     async def create_referral_user(
-        cls, session: AsyncSession, referrall_user: models.User, referrer_id: int
+        cls, session: AsyncSession, referral_user: models.User, referrer_id: int
     ):
         query = (
             select(models.User)
@@ -38,13 +42,20 @@ class UserRepository:
         )
         result = await session.execute(query)
         referrer = result.scalars().first()
-        referrer.referral.append(referrall_user)
-        await session.commit()
-        await session.refresh(referrer)
-        return referrer
+        if referrer:
+            referrer.referral.append(referral_user)
+            await session.commit()
+            await session.refresh(referrer)
+            return referrer
 
 
 class ReferralCodeRepository:
+    @classmethod
+    async def get_code(cls, session: AsyncSession, referral_code: str):
+        query = select(models.ReferralCode).filter_by(code=referral_code)
+        result = await session.execute(query)
+        return result.scalars().first()
+
     @classmethod
     async def get_code_by_user(cls, session: AsyncSession, user_id: int):
         query = select(models.ReferralCode).filter_by(user_id=user_id)
@@ -54,8 +65,8 @@ class ReferralCodeRepository:
     @classmethod
     async def get_code_by_user_email(cls, session: AsyncSession, email: EmailStr):
         query = select(models.ReferralCode).join(models.User).filter_by(email=email)
-        referral_code = await session.execute(query)
-        return referral_code.scalars().first()
+        result = await session.execute(query)
+        return result.scalars().first()
 
     @classmethod
     async def create_code(
