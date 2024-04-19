@@ -27,6 +27,22 @@ class UserRepository:
         await session.refresh(db_user)
         return db_user
 
+    @classmethod
+    async def create_referral_user(
+        cls, session: AsyncSession, referrall_user: models.User, referrer_id: int
+    ):
+        query = (
+            select(models.User)
+            .filter_by(id=referrer_id)
+            .options(joinedload(models.User.referral))
+        )
+        result = await session.execute(query)
+        referrer = result.scalars().first()
+        referrer.referral.append(referrall_user)
+        await session.commit()
+        await session.refresh(referrer)
+        return referrer
+
 
 class ReferralCodeRepository:
     @classmethod

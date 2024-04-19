@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 8ae6411003dc
+Revision ID: caad7ff8f0ae
 Revises: 
-Create Date: 2024-04-18 12:17:20.573234
+Create Date: 2024-04-19 14:40:24.178573
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8ae6411003dc'
+revision: str = 'caad7ff8f0ae'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -39,11 +39,11 @@ def upgrade() -> None:
     sa.UniqueConstraint('code')
     )
     op.create_table('user_referral',
-    sa.Column('referrer_id', sa.Integer(), nullable=False),
-    sa.Column('referee_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['referee_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['referrer_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('referrer_id', 'referee_id')
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('referral_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['referral_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('user_id', 'referral_id')
     )
     # ### end Alembic commands ###
 
