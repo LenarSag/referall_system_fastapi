@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: caad7ff8f0ae
+Revision ID: 3a020237a85c
 Revises: 
-Create Date: 2024-04-19 14:40:24.178573
+Create Date: 2024-04-20 12:45:10.540345
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'caad7ff8f0ae'
+revision: str = '3a020237a85c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -33,6 +33,7 @@ def upgrade() -> None:
     sa.Column('code', sa.String(length=255), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('expires_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -41,8 +42,8 @@ def upgrade() -> None:
     op.create_table('user_referral',
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('referral_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['referral_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['referral_id'], ['user.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('user_id', 'referral_id')
     )
     # ### end Alembic commands ###

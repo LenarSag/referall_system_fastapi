@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from sqlalchemy import Column, ForeignKey, Integer, Text, String, DateTime, Table
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
 
 
 class Base(DeclarativeBase):
@@ -11,8 +11,15 @@ class Base(DeclarativeBase):
 user_referral = Table(
     "user_referral",
     Base.metadata,
-    Column("user_id", Integer, ForeignKey("user.id"), primary_key=True),
-    Column("referral_id", Integer, ForeignKey("user.id"), primary_key=True),
+    Column(
+        "user_id", Integer, ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
+    ),
+    Column(
+        "referral_id",
+        Integer,
+        ForeignKey("user.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
 )
 
 
@@ -32,7 +39,7 @@ class User(Base):
         secondary=user_referral,
         primaryjoin=id == user_referral.c.user_id,
         secondaryjoin=id == user_referral.c.referral_id,
-        backref="referrals",
+        backref=backref("referrals", cascade="all, delete"),
     )
 
     # referrer: Mapped["User"] = relationship(
@@ -58,6 +65,7 @@ class ReferralCode(Base):
     code: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=True)
     expires_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now() + timedelta(days=30)
     )

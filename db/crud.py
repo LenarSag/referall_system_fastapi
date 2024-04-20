@@ -19,9 +19,18 @@ class UserRepository:
         result = await session.execute(query)
         return result.scalars().first()
 
-    # @classmethod
-    # async def get_user_by_referral_code(cls, session: AsyncSession, referral_code: str):
-    #     query = select(models.User).join(models.ReferralCode).filter_by()
+    @classmethod
+    async def get_user_by_referral_code(cls, session: AsyncSession, referral_code: str):
+        query = (
+            select(models.User)
+            .options(
+                joinedload(models.User.referral), joinedload(models.User.referral_code)
+            )
+            .join(models.ReferralCode)
+            .filter_by(code=referral_code)
+        )
+        result = await session.execute(query)
+        return result.scalars().first()
 
     @classmethod
     async def create_user(cls, session: AsyncSession, user_data: schemas.UserCreate):
@@ -33,20 +42,15 @@ class UserRepository:
 
     @classmethod
     async def create_referral_user(
-        cls, session: AsyncSession, referral_user: models.User, referrer_id: int
+        cls,
+        session: AsyncSession,
+        referral_user: models.User,
+        referrer_user: models.User,
     ):
-        query = (
-            select(models.User)
-            .filter_by(id=referrer_id)
-            .options(joinedload(models.User.referral))
-        )
-        result = await session.execute(query)
-        referrer = result.scalars().first()
-        if referrer:
-            referrer.referral.append(referral_user)
-            await session.commit()
-            await session.refresh(referrer)
-            return referrer
+        referrer_user.referral.append(referral_user)
+        await session.commit()
+        await session.refresh(referrer_user)
+        return referral_user
 
 
 class ReferralCodeRepository:
@@ -77,3 +81,24 @@ class ReferralCodeRepository:
         await session.commit()
         await session.refresh(db_code)
         return db_code
+
+    @classmethod
+    async def update_code(
+        cls,
+        session: AsyncSession,
+        db_code: models.ReferralCode,
+        new_code_data: schemas.ReferralCodeCreate,
+    ):
+        db_code.code = new_code_data.code
+        db_code.description = new_code_data.description
+        db_code.is_active = new_code_data.is_active
+        db_code.expires_at = new_code_data.expires_at
+        await session.commit()
+        await session.refresh(db_code)
+        return db_code
+
+    @classmethod
+    async def delete_code(cls, session: AsyncSession, db_code: models.ReferralCode):
+        await session.delete(db_code)
+        await session.commit()
+        return True
