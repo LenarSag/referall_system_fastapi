@@ -42,21 +42,6 @@ class User(Base):
         backref=backref("referrals", cascade="all, delete"),
     )
 
-    # referrer: Mapped["User"] = relationship(
-    #     "User",
-    #     secondary=user_referral,
-    #     primaryjoin=id == user_referral.c.referrer_id,
-    #     secondaryjoin=id == user_referral.c.referrals_id,
-    #     back_populates="referrals",
-    # )
-    # referrals: Mapped[list["User"]] = relationship(
-    #     "User",
-    #     secondary=user_referral,
-    #     primaryjoin=id == user_referral.c.referrals_id,
-    #     secondaryjoin=id == user_referral.c.referrer_id,
-    #     back_populates="referrer",
-    # )
-
 
 class ReferralCode(Base):
     __tablename__ = "referral_code"

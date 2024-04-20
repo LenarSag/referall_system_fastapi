@@ -33,6 +33,16 @@ class UserRepository:
         return result.scalars().first()
 
     @classmethod
+    async def get_user_referrals(cls, session: AsyncSession, user_id: int):
+        query = (
+            select(models.User)
+            .filter_by(id=user_id)
+            .options(joinedload(models.User.referral))
+        )
+        result = await session.execute(query)
+        return result.scalars().first()
+
+    @classmethod
     async def create_user(cls, session: AsyncSession, user_data: schemas.UserCreate):
         db_user = models.User(**user_data.model_dump())
         session.add(db_user)
